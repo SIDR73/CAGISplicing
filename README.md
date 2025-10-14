@@ -1,122 +1,152 @@
-# DrASNet-inspired Splicing Variant Prediction Pipeline
+# CAGI7 Splicing Prediction Pipeline
 
-This pipeline implements a machine learning approach for predicting splicing variant effects, inspired by the DrASNet methodology for identifying driver mutations that cause alternative splicing changes.
+This repository contains a streamlined Python implementation of the DrASNet methodology for predicting splicing variants in the CAGI7 challenge.
 
 ## Overview
 
-The pipeline combines:
-1. **DrASNet methodology**: Network-based identification of driver mutations
-2. **Feature engineering**: Comprehensive variant and network-based features
-3. **Ensemble learning**: Multiple machine learning models for robust predictions
-4. **Greedy algorithm**: Driver mutation prioritization
+The pipeline implements the DrASNet approach which:
+1. Extracts comprehensive features from variant data
+2. Integrates PPI network information for trans-regulation
+3. Trains ensemble machine learning models
+4. Generates predictions with confidence scores
+
+## Quick Start
+
+### 1. Extract Features (One-time setup)
+```bash
+python extract_features.py
+```
+This creates:
+- `train_features.csv` - Training data with all features
+- `test_features.csv` - Test data with all features  
+- `feature_summary.csv` - Summary of all features
+
+### 2. Run Machine Learning
+```bash
+# Fast mode (smaller models)
+python run_ml.py --fast
+
+# Full mode (larger models)
+python run_ml.py
+
+# Custom threshold
+python run_ml.py --threshold 0.2
+```
 
 ## Files
 
-- `advanced_splicing_pipeline.py`: Main pipeline implementation
-- `splicing_prediction_pipeline.py`: Basic pipeline version
-- `run_pipeline.py`: Simple runner script
-- `requirements.txt`: Python dependencies
-- `cagi7splicingsample.csv`: Training data
-- `cagi7splicingvariants.csv`: Test variants for prediction
+### Core Pipeline
+- `extract_features.py` - Feature extraction script (run once)
+- `ml_pipeline.py` - Machine learning pipeline
+- `run_ml.py` - Simple runner script
 
-## Installation
+### Data Analysis
+- `data_preparation_guide.py` - Data analysis and acquisition guide
+- `gencode_gene_mapper.py` - Maps genomic coordinates to gene names
+- `create_gene_mapping.py` - Placeholder for variant-to-gene mapping
 
-1. Install required packages:
-```bash
-pip install -r requirements.txt
-```
+### Utilities
+- `requirements.txt` - Python dependencies
 
-## Usage
+## Data Requirements
 
-### Quick Start
-```bash
-python run_pipeline.py
-```
+### Required Files
+- `cagi7splicingsample.csv` - Training data with PSI profiles
+- `cagi7splicingvariants.csv` - Test variants for prediction
+- `DrASNet_data/input_data/network.txt` - PPI network data
 
-### Advanced Usage
-```python
-from advanced_splicing_pipeline import AdvancedDrASNetPipeline
+### Optional Files
+- `gencode.v47.annotation.gtf.gz` - Gene annotations (for better gene mapping)
+- `train_gene_mapping.csv` - Pre-computed gene mappings
+- `test_gene_mapping.csv` - Pre-computed gene mappings
 
-# Initialize pipeline
-pipeline = AdvancedDrASNetPipeline()
+## Features
 
-# Load data
-pipeline.load_data('cagi7splicingsample.csv', 'cagi7splicingvariants.csv')
+The pipeline extracts comprehensive features including:
 
-# Run complete pipeline
-pipeline.create_ppi_network()
-pipeline.identify_personalized_as_events()
-pipeline.identify_mutation_as_pairs()
-pipeline.prioritize_driver_mutations()
-pipeline.create_advanced_features()
-pipeline.train_ensemble_models()
+### Basic Variant Features
+- **Position**: Genomic position with multiple encodings
+- **Allele Type**: Transition/transversion classification
+- **Oligo Type**: Periexonic vs deep intronic
+- **Chromosome**: Autosome vs sex chromosome
 
-# Generate predictions
-predictions = pipeline.generate_final_predictions()
-```
+### Enhanced Features
+- **Position Encodings**: Multiple scales (mod 1000, 100, 10, log)
+- **Allele Length**: Reference and alternative allele lengths
+- **Length Difference**: Insertion/deletion size
 
-## Methodology
+### Splicing Features (Training Only)
+- **PSI Measurements**: Reference and variant PSI values
+- **Splicing Changes**: Delta PSI, magnitude, direction
+- **Derived Features**: PSI ratios and change patterns
 
-### 1. Personalized AS Event Identification
-- Identifies variants with significant splicing changes (|ΔPSI| > 0.1)
-- Maps variants to genes and creates AS event profiles
-
-### 2. Mutation-AS Pair Identification
-- **Cis regulation**: Mutations in the same gene as the splicing event
-- **Trans regulation**: Mutations in genes connected to the splicing gene via PPI network
-
-### 3. Driver Mutation Prioritization
-- Implements greedy algorithm to identify key driver mutations
-- Selects mutations that control the most splicing events in the network
-
-### 4. Feature Engineering
-- **Variant features**: Position, allele type, oligo type
-- **Network features**: Degree, betweenness, closeness centrality
-- **Driver features**: Driver mutation status and scores
-- **Splicing features**: PSI values, ΔPSI, PRES scores
-
-### 5. Ensemble Learning
-- Random Forest Classifier
-- Gradient Boosting Classifier  
-- Logistic Regression
-- Voting ensemble with soft voting
+### Network Features
+- **PPI Network**: Degree, betweenness, closeness centrality
+- **Network Membership**: Whether gene is in the network
 
 ## Output
 
 The pipeline generates:
-- `advanced_splicing_predictions.csv`: Final predictions with scores
-- Console output with performance metrics and summary statistics
+- `ml_predictions.csv` - Final predictions with confidence scores
+- `feature_importance.csv` - Analysis of feature importance
+- `feature_summary.csv` - Summary of all extracted features
 
-## Key Features
+## Machine Learning
 
-- **Network-based approach**: Leverages protein-protein interaction networks
-- **Driver mutation prioritization**: Identifies functional vs. passenger mutations
-- **Comprehensive feature set**: Combines multiple data types
-- **Ensemble methodology**: Robust predictions from multiple models
-- **Scalable design**: Handles large variant datasets
+### Ensemble Approach
+- **Random Forest**: 200 trees, depth 15, balanced parameters
+- **Gradient Boosting**: 200 estimators, learning rate 0.1
+- **Logistic Regression**: Balanced class weights, L2 regularization
+- **Voting Classifier**: Soft voting for final predictions
+
+### Performance Modes
+- **Fast Mode**: Smaller models (50 estimators) for quick testing
+- **Full Mode**: Larger models (200 estimators) for best performance
+- **Configurable Threshold**: Default 0.1, adjustable via command line
+
+## Methodology
+
+### DrASNet Integration
+1. **Feature Engineering**: Comprehensive variant and network features
+2. **PPI Network**: Real protein-protein interaction network
+3. **Gene Mapping**: Genomic coordinate to gene name mapping
+4. **Ensemble Learning**: Multiple models for robust predictions
+
+### Feature Categories
+- **Basic Features**: ~8 (position, allele, oligo type)
+- **Enhanced Features**: ~6 (position encodings, chromosome type)
+- **Splicing Features**: ~9 (PSI measurements and derivatives)
+- **Network Features**: ~4 (degree, betweenness, closeness, membership)
+- **Total**: ~27 features
 
 ## Performance
 
-The pipeline includes:
-- Cross-validation for model evaluation
-- Validation set performance metrics
-- ROC-AUC scoring for binary classification
-- Feature importance analysis
+### Fast Mode
+- **Training Time**: ~30 seconds
+- **Models**: 50 estimators each
+- **Use Case**: Quick testing and development
 
-## Customization
+### Full Mode  
+- **Training Time**: ~2-3 minutes
+- **Models**: 200 estimators each
+- **Use Case**: Final predictions and submission
 
-The pipeline can be customized by:
-- Modifying feature engineering functions
-- Adding new machine learning models
-- Incorporating additional network databases
-- Adjusting hyperparameters
+## Troubleshooting
 
-## References
+### Common Issues
+1. **Missing feature files**: Run `python extract_features.py` first
+2. **Missing network file**: Pipeline will use simple features only
+3. **Gene mapping errors**: Check Gencode file format
 
-Based on the DrASNet methodology:
-- Sahni, N., et al. "Widespread macromolecular interaction perturbations in human genetic disorders." Cell 161.3 (2015): 647-660.
-- DrASNet R implementation for cancer splicing analysis
+### Debugging
+- Check `feature_summary.csv` for feature statistics
+- Use `--fast` flag for quick testing
+- Verify all required CSV files exist
 
-## Contact
+## Citation
 
-For questions or issues, please refer to the original DrASNet authors or create an issue in this repository.
+If you use this pipeline, please cite the original DrASNet paper and the CAGI7 challenge.
+
+## License
+
+This project is licensed under the MIT License.
