@@ -21,15 +21,18 @@ This creates:
 - `test_features.csv` - Test data with all features  
 - `feature_summary.csv` - Summary of all features
 
-### 2. Run Machine Learning
+### 2. Run Machine Learning Pipeline
 ```bash
-# Fast mode (smaller models)
+# Fast mode (smaller models, ~30 seconds)
 python run_ml.py --fast
 
-# Full mode (larger models)
+# Full mode (larger models, ~2-3 minutes)
 python run_ml.py
 
-# Custom threshold
+# With DrASNet greedy prioritization
+python run_ml.py --greedy
+
+# Custom prediction threshold
 python run_ml.py --threshold 0.2
 ```
 
@@ -38,12 +41,8 @@ python run_ml.py --threshold 0.2
 ### Core Pipeline
 - `extract_features.py` - Feature extraction script (run once)
 - `ml_pipeline.py` - Machine learning pipeline
-- `run_ml.py` - Simple runner script
-
-### Data Analysis
-- `data_preparation_guide.py` - Data analysis and acquisition guide
-- `gencode_gene_mapper.py` - Maps genomic coordinates to gene names
-- `create_gene_mapping.py` - Placeholder for variant-to-gene mapping
+- `run_ml.py` - Main entry point for ML pipeline
+- `greedy_prioritization.py` - DrASNet greedy algorithm for driver mutation prioritization
 
 ### Utilities
 - `requirements.txt` - Python dependencies

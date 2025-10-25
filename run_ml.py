@@ -20,10 +20,12 @@ def main():
     
     # Import and run ML pipeline
     from ml_pipeline import MLPipeline
+    from greedy_prioritization import apply_greedy_to_ml_pipeline
     
     # Parse arguments
     fast_mode = '--fast' in sys.argv
     threshold = 0.1
+    use_greedy = '--greedy' in sys.argv
     
     if '--threshold' in sys.argv:
         idx = sys.argv.index('--threshold')
@@ -32,6 +34,7 @@ def main():
     
     print(f"Fast mode: {fast_mode}")
     print(f"Threshold: {threshold}")
+    print(f"Use greedy prioritization: {use_greedy}")
     print()
     
     # Run ML pipeline with proper feature selection (no data leakage)
@@ -40,6 +43,23 @@ def main():
     # Load features
     pipeline.load_features()
     pipeline.prepare_data()
+    
+    # Apply greedy prioritization if requested
+    if use_greedy:
+        print("Applying DrASNet greedy prioritization...")
+        # Load network for greedy algorithm
+        import networkx as nx
+        import pandas as pd
+        network_file = 'DrASNet_data/input_data/network.txt'
+        if os.path.exists(network_file):
+            ppi_data = pd.read_csv(network_file, sep='\t', header=None, names=['gene1', 'gene2'])
+            network = nx.from_edgelist(ppi_data.values)
+            pipeline.train_features, pipeline.test_features = apply_greedy_to_ml_pipeline(
+                pipeline.train_features, pipeline.test_features, network
+            )
+        else:
+            print("⚠ Network file not found, skipping greedy prioritization")
+            use_greedy = False
     
     # Remove ground truth splicing features to prevent data leakage
     print("Removing ground truth splicing features to prevent data leakage...")
